@@ -1,0 +1,19 @@
+<!-- templates/index.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}WRECK IT 5.0{% endblock %}
+
+{% block content %}
+
+    <div class="container d-flex align-items-center" style="min-height: calc(100vh - 140px);">
+        <div class="text-center">
+            <!-- Centered logo image -->
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Image" class="img-fluid mx-auto d-block" style="max-height: 400px;">
+
+            <!-- Description -->
+            <p class="lead mt-4">Welcome to WRECK IT 5.0, the ultimate competition where digital warriors clash in the arena of code and creativity, striving to leave their mark on the digital battleground. Dive into the fray and unleash your skills in a symphony of chaos and innovation, where every keystroke could tilt the scales of victory. Join us in the epicenter of digital warfare, where challenges await at every turn, and only the boldest dare to defy the status quo.</p>
+        </div>
+    </div>
+
+{% endblock %}

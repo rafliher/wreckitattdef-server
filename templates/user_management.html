@@ -1,0 +1,193 @@
+<!-- templates/user_management.html -->
+
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>User Management</h1>
+
+        <button class="btn btn-primary mb-3" id="addUserBtn">Add New User</button>
+        <button class="btn btn-secondary mb-3" id="importUsersBtn">Import Users</button>
+        <button class="btn btn-success mb-3" id="exportBtn">Export Users</button>
+        <table class="table" id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Host IP</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.host_ip }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger deleteBtn" data-user-id="{{ user.id }}">Delete</button>
+                        <button class="btn btn-sm btn-primary showBtn" data-user="{{ user.__repr__() }}">Show</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block customScripts %}
+    <!-- SweetAlert library -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- DataTables library -->
+    <script src="https://cdn.datatables.net/2.0.3/js/dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#userTable').DataTable();
+
+            $('#addUserBtn').click(function() {
+                // Show SweetAlert for adding new user
+                Swal.fire({
+                    title: 'Add New User',
+                    html: '<input id="usernameInput" class="swal2-input" placeholder="Username">' +
+                        '<input id="passwordInput" type="password" class="swal2-input" placeholder="Password">' +
+                        '<input id="hostIpInput" class="swal2-input" placeholder="Host IP">',
+                    showCancelButton: true,
+                    confirmButtonText: 'Add',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        const username = $('#usernameInput').val();
+                        const password = $('#passwordInput').val();
+                        const hostIp = $('#hostIpInput').val();
+                        return $.ajax({
+                            url: '/user',
+                            type: 'POST',
+                            data: {
+                                username: username,
+                                password: password,
+                                host_ip: hostIp
+                            }
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.reload();
+                    }
+                });
+            });
+
+            $('#importUsersBtn').click(function() {
+                Swal.fire({
+                    title: 'Import Users',
+                    html: '<input type="file" id="fileInput" accept=".json">',
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload',
+                    preConfirm: () => {
+                        const file = $('#fileInput')[0].files[0];
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        return $.ajax({
+                            url: '/user/import',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    location.reload();
+                });
+            });
+
+            $('#exportBtn').click(function() {
+                window.location.href = '/user/export';
+            });
+
+            $('.deleteBtn').click(function() {
+                const userId = $(this).data('user-id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'You will not be able to recover this user!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/user/' + userId,
+                            type: 'DELETE',
+                            success: function(response) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response,
+                                    'success'
+                                ).then(x => {location.reload()}).error(x => {location.reload()});
+                            },
+                            error: function(xhr, status, error) {
+                                Swal.fire(
+                                    'Error!',
+                                    'Failed to delete user.',
+                                    'error'
+                                ).then(x => {location.reload()}).error(x => {location.reload()});
+                            }
+                        });
+                    }
+                });
+            });
+
+            $('.showBtn').click(function() {
+                const userData = $(this).data('user');
+                Swal.fire({
+                    title: 'User Details',
+                    html: `
+                        <p style="margin: 3px 0px 1px 0px;">ID</p>
+                        <input type="text" id="id" value="${userData.id}" class="swal2-input" disabled style="width: 350px; margin-top: 0px;">
+                        <p style="margin: 3px 0px 1px 0px;">Username</p>
+                        <input type="text" id="username" value="${userData.username}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
+                        <p style="margin: 3px 0px 5px 0px;">Password</p>
+                        <input type="password" id="password" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;">
+                        <p style="margin: 3px 0px 1px 0px;">IP Address</p>
+                        <input type="text" id="host_ip" value="${userData.host_ip}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
+                    `,
+                    showCancelButton: true,
+                    cancelButtonText: 'Close',
+                    confirmButtonText: 'Update',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        const username = $('#username').val();
+                        const hostIp = $('#host_ip').val();
+                        const password = $('#password').val();
+                        return $.ajax({
+                            url: '/user/' + userData.id,
+                            type: 'PUT',
+                            data: {
+                                username: username,
+                                host_ip: hostIp,
+                                password: password
+                            }
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.reload();
+                    }
+                });
+            });
+
+        });
+    </script>
+{% endblock %}
+
+{% block customStyles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.min.css">
+    <style>
+        .swal2-input {
+            margin-top: 0px;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,6 @@
+flask
+flask_login
+openai
+mysqlclient2
+python_dotenv
+openai

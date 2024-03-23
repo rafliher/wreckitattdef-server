@@ -1,0 +1,163 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WRECK IT 5.0{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    {% block customStyles %}
+    {% endblock %}
+    <style>
+        *, :before, :after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bodyContent {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative; /* Added for positioning the background image */
+        }
+
+        nav {
+            height: 80px;
+        }
+
+        /* Dark-colored navbar */
+        .navbar-dark .navbar-nav .nav-link {
+            color: #fff;
+        }
+
+        .navbar-dark .navbar-toggler-icon {
+            background-color: #fff;
+        }
+
+        /* Footer style */
+        footer {
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo_banner.png') }}" style="height: 60px;" alt="WRECK IT 5.0" srcset=""></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('user') }}"><i class="fas fa-users-cog"></i> User Management</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user"></i> {{ current_user.username | safe}}
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown" style="transform: translateX(calc(-1*(50%)));">
+                            <a class="dropdown-item" href="{{ url_for('change_password') }}"><i class="fas fa-lock"></i> Change Password</a>
+                            <a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="bodyContent">
+        <div class="fluid-container" style="min-height: calc(100vh - 140px);">
+            {% block content %}{% endblock %}
+        </div>
+    
+    </div>
+    <!-- Footer -->
+    <footer class="bg-dark">
+        &copy; 2024 WRECK IT 5.0. All rights reserved.
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
+    {% block customScripts %}
+    {% endblock %}
+    
+    <!-- Script for displaying flash messages -->
+    <script>
+        $(document).ready(function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    var flashMessages = [
+                        {% for category, message in messages %}
+                            ["{{ category }}", "{{ message }}"],
+                        {% endfor %}
+                    ];
+                    
+                    flashMessages.forEach(function(flash) {
+                        var category = flash[0];
+                        var message = flash[1];
+                        
+                        var alertDiv = $('<div class="alert alert-dismissible hidden fade show m-1 ' + getAlertClass(category) + '" role="alert" style="position: absolute; top: -100px; right: 0;">' +
+                                            message +
+                                            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                                '<span aria-hidden="true">&times;</span>' +
+                                            '</button>' +
+                                        '</div>');
+                        
+                        $('body').append(alertDiv);
+
+                        console.log(alertDiv);
+
+                        // Animate the alert's showing
+                        alertDiv.animate({top: '80px'}, 500, function() {
+                            // Automatically close the alert after a delay
+                            setTimeout(function() {
+                                alertDiv.alert('close');
+                            }, 3000);
+                        });
+                    });
+                {% endif %}
+            {% endwith %}
+        });
+
+        function getAlertClass(category) {
+            switch(category) {
+                case 'info':
+                    return 'alert-info';
+                case 'success':
+                    return 'alert-success';
+                case 'warning':
+                    return 'alert-warning';
+                case 'danger':
+                    return 'alert-danger';
+                default:
+                    return 'alert-secondary';
+            }
+        }
+    </script>
+
+</body>
+</html>

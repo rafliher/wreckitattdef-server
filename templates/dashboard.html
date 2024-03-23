@@ -1,0 +1,91 @@
+<!-- templates/dashboard.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+    <style>
+        .ribbon {
+            --f: 10px; /* control the folded part*/
+            --r: 20px; /* control the ribbon shape */
+            --t: 10px; /* the top offset */
+            
+            position: absolute;
+            inset: var(--t) calc(-1*var(--f)) auto auto;
+            padding: 0 10px var(--f) calc(10px + var(--r));
+            clip-path: 
+                polygon(0 0,100% 0,100% calc(100% - var(--f)),calc(100% - var(--f)) 100%,
+                calc(100% - var(--f)) calc(100% - var(--f)),var(--r) calc(100% - var(--f)));
+            background: #d6d603;
+            color: hwb(0 100% 0%);
+            font-weight: 400;
+            box-shadow: 0 calc(-1*var(--f)) 0 inset #0005;
+        }
+        
+        .question-card:hover {
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            transition: box-shadow 0.3s ease;
+        }
+    </style>
+
+    <div class="container mt-5">
+        <h1>Welcome to your Dashboard, {{ current_user.username | safe }}!</h1>
+        
+        <div class="row mt-3">
+            {% for challenge in challenges %}
+                <div class="col-md-3 mb-4">
+                    <div class="card question-card" onclick="showQuestionDetails(`{{ question.id }}`,`{{ question.title | safe }}`, `{{ question.description | safe }}`, `{{ question.goal | safe }}`)">
+                        <div class="card-body d-flex align-items-center justify-content-center" style=`height: 120px; background-color: {{ '#0051a1' if question.completed_by_current_user else '#bebebe'}} ; color: white;`>
+                            {% if challenge.completed_by_current_user %}
+                                <div class="ribbon">Completed</div>
+                            {% endif %}
+                            <p class="card-title m-0">{{ challenge.title | safe }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function showQuestionDetails(question_id, title, description, goal) {
+            $('#questionModalTitle').text(title);
+            $('#questionModalDescription').text(description);
+            $('#questionModalGoal').text(goal);
+            $('#solveQuestionButton').attr('data-question-id', question_id);  // Set the question_id as a data attribute
+            $('#questionModal').modal('show');
+        }
+    
+        // Add this function to handle the "Solve" button click
+        function solveQuestion() {
+            var questionId = $('#solveQuestionButton').attr('data-question-id');
+            window.location.href = '/solve/' + questionId;
+        }
+    </script>
+    
+    <!-- Bootstrap Modal -->
+    <div class="modal" tabindex="-1" role="dialog" id="questionModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="questionModalTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="questionModalDescription"></p>
+                    <p><strong>Goal:</strong> <span id="questionModalGoal"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="solveQuestion()" id="solveQuestionButton">Solve</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
