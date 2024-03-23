@@ -34,6 +34,17 @@ class Challenge(db.Model):
     port = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, nullable=False)
     submissions = relationship("Submission")
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'port': self.port,
+            'description': self.description,
+        }
+
+    def __repr__(self):
+        return json.dumps(self.serialize())
 
 class Flag(db.Model):
     id = db.Column(db.Integer, primary_key=True)

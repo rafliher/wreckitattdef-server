@@ -14,7 +14,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 from app import models, views, controllers
-from app.controllers import main_controller, auth_controller, user_controller
+from app.controllers import main_controller, auth_controller, user_controller, challenge_controller
 
 @login_manager.user_loader
 def load_user(user_id):

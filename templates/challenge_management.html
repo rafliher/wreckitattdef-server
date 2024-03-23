@@ -1,0 +1,196 @@
+<!-- templates/challenge_management.html -->
+
+{% extends 'base.html' %}
+{% block title %}Challenge Management{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Challenge Management</h1>
+
+        <button class="btn btn-primary mb-3" id="addChallengeBtn">Add New Challenge</button>
+        <button class="btn btn-secondary mb-3" id="importChallengesBtn">Import Challenges</button>
+        <button class="btn btn-success mb-3" id="exportBtn">Export Challenges</button>
+        <table class="table" id="challengeTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Port</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for challenge in challenges %}
+                <tr>
+                    <td>{{ challenge.id }}</td>
+                    <td>{{ challenge.title }}</td>
+                    <td>{{ challenge.port }}</td>
+                    <td>{{ challenge.description }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger deleteBtn" data-challenge-id="{{ challenge.id }}">Delete</button>
+                        <button class="btn btn-sm btn-primary showBtn" data-challenge="{{ challenge.__repr__() }}">Show</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block customScripts %}
+    <!-- SweetAlert library -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- DataTables library -->
+    <script src="https://cdn.datatables.net/2.0.3/js/dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#challengeTable').DataTable();
+
+            $('#addChallengeBtn').click(function() {
+                // Show SweetAlert for adding new challenge
+                Swal.fire({
+                    title: 'Add New Challenge',
+                    html: '<input id="titleInput" class="swal2-input" placeholder="Title">' +
+                        '<input id="portInput" type="number" class="swal2-input" placeholder="Port">' +
+                        '<textarea id="descriptionInput" class="swal2-textarea" style="width: 100%;margin: 0px 0px 3px 0px;resize: none;" placeholder="Description"></textarea>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Add',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        const title = $('#titleInput').val();
+                        const port = $('#portInput').val();
+                        const description = $('#descriptionInput').val();
+                        return $.ajax({
+                            url: '/challenge',
+                            type: 'POST',
+                            data: {
+                                title: title,
+                                port: port,
+                                description: description
+                            }
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.reload();
+                    }
+                });
+            });
+
+            $('#importChallengesBtn').click(function() {
+                Swal.fire({
+                    title: 'Import Challenges',
+                    html: '<input type="file" id="fileInput" accept=".json">',
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload',
+                    preConfirm: () => {
+                        const file = $('#fileInput')[0].files[0];
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        return $.ajax({
+                            url: '/challenge/import',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    location.reload();
+                });
+            });
+
+            $('#exportBtn').click(function() {
+                window.location.href = '/challenge/export';
+            });
+
+            $('.deleteBtn').click(function() {
+                const challengeId = $(this).data('challenge-id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'You will not be able to recover this challenge!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/challenge/' + challengeId,
+                            type: 'DELETE',
+                            success: function(response) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response,
+                                    'success'
+                                ).then(x => {location.reload()}).error(x => {location.reload()});
+                            },
+                            error: function(xhr, status, error) {
+                                Swal.fire(
+                                    'Error!',
+                                    'Failed to delete challenge.',
+                                    'error'
+                                ).then(x => {location.reload()}).error(x => {location.reload()});
+                            }
+                        });
+                    }
+                });
+            });
+
+            $('.showBtn').click(function() {
+                const challengeData = $(this).data('challenge');
+                Swal.fire({
+                    title: 'Challenge Details',
+                    html: `
+                        <p style="margin: 3px 0px 1px 0px;">ID</p>
+                        <input type="text" id="id" value="${challengeData.id}" class="swal2-input" disabled style="width: 350px; margin-top: 0px;">
+                        <p style="margin: 3px 0px 1px 0px;">Title</p>
+                        <input type="text" id="title" value="${challengeData.title}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
+                        <p style="margin: 3px 0px 1px 0px;">Port</p>
+                        <input type="number" id="port" value="${challengeData.port}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
+                        <p style="margin: 3px 0px 1px 0px;">Description</p>
+                        <textarea id="description" class="swal2-textarea" style="width: 100%;margin: 0px 0px 3px 0px;resize: none;" placeholder="Description">${challengeData.description}</textarea>
+
+                    `,
+                    showCancelButton: true,
+                    cancelButtonText: 'Close',
+                    confirmButtonText: 'Update',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        const title = $('#title').val();
+                        const port = $('#port').val();
+                        const description = $('#description').val();
+                        return $.ajax({
+                            url: '/challenge/' + challengeData.id,
+                            type: 'PUT',
+                            data: {
+                                title: title,
+                                port: port,
+                                description: description
+                            }
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.reload();
+                    }
+                });
+            });
+
+        });
+    </script>
+{% endblock %}
+
+{% block customStyles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.min.css">
+    <style>
+        .swal2-input,.swal2-textarea  {
+            margin-top: 0px;
+        }
+    </style>
+{% endblock %}
