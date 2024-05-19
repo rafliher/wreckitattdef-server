@@ -16,7 +16,8 @@ import json
 def dashboard():
     challenges = Challenge.query.all()
 
-    return render_template('dashboard.html', challenges=challenges)
+    print(current_user)
+    return render_template('dashboard.html', challenges=challenges, current_user=current_user)
 
 # @app.route('/scoreboard')
 # def scoreboard():
