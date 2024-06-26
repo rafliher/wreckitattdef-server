@@ -1,8 +1,106 @@
 # challenge_controller.py
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from app import app, db
-from app.models import Challenge
+from app.models import Challenge,User
 from flask_login import login_required, current_user
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from dotenv import load_dotenv
+import requests
+import os
+
+load_dotenv()
+
+@app.route('/api/challenges', methods=['GET'])
+@jwt_required()
+def api_challenges():
+    challenges = Challenge.query.all()
+    challenges_list = [challenge.serialize() for challenge in challenges]
+    return jsonify(challenges_list), 200
+
+@app.route('/api/restart/<string:challenge>', methods=['POST'])
+@jwt_required()
+def restart_challenge(challenge):
+    username = get_jwt_identity()['username']
+    user = User.query.filter_by(username=username).first()
+    url = f'http://{user.host_ip}/restart/{challenge}'
+
+    try:
+        response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"message": "Failed to restart challenge.", "status_code": response.status_code}), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/api/rollback/<string:challenge>', methods=['POST'])
+@jwt_required()
+def rollback_challenge(challenge):
+    username = get_jwt_identity()['username']
+    user = User.query.filter_by(username=username).first()
+    url = f'http://{user.host_ip}/rollback/{challenge}'
+
+    try:
+        response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"message": "Failed to rollback challenge.", "status_code": response.status_code}), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+    
+@app.route('/api/activate/<string:challenge>', methods=['POST'])
+@jwt_required()
+def activate_challenge(challenge):
+    username = get_jwt_identity()['username']
+    user = User.query.filter_by(username=username).first()
+    url = f'http://{user.host_ip}/activate/{challenge}'
+
+    try:
+        response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"message": "Failed to activate challenge.", "status_code": response.status_code}), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/api/deactivate/<string:challenge>', methods=['POST'])
+@jwt_required()
+def deactivate_challenge(challenge):
+    username = get_jwt_identity()['username']
+    user = User.query.filter_by(username=username).first()
+    url = f'http://{user.host_ip}/deactivate/{challenge}'
+
+    try:
+        response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"message": "Failed to deactivate challenge.", "status_code": response.status_code}), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/api/credential/<string:challenge>', methods=['POST'])
+@jwt_required()
+def challenge_credential(challenge):
+    username = get_jwt_identity()['username']
+    user = User.query.filter_by(username=username).first()
+    url = f'http://{user.host_ip}/credential/{challenge}'
+
+    try:
+        response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+
+        if response.status_code == 200:
+            return jsonify(response.json()), 200
+        else:
+            return jsonify({"message": "Failed to fetch challenge credential.", "status_code": response.status_code}), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
 
 @app.route('/challenges', methods=['GET'])
 @login_required
@@ -17,11 +115,12 @@ def add_challenge():
         flash('You do not have permission to access this page.', 'danger')
         return redirect(url_for('dashboard'))
     
+    name = request.form.get('name')
     title = request.form.get('title')
     port = request.form.get('port')
     description = request.form.get('description')
     
-    challenge = Challenge(title=title, port=port, description=description)
+    challenge = Challenge(name=name, title=title, port=port, description=description)
     db.session.add(challenge)
     db.session.commit()
     

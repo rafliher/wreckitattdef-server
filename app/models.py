@@ -3,6 +3,7 @@ from app import db
 from datetime import datetime
 from sqlalchemy.orm import relationship
 import json 
+import pytz
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,6 +31,7 @@ class User(db.Model, UserMixin):
 
 class Challenge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     port = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -39,6 +41,7 @@ class Challenge(db.Model):
         return {
             'id': self.id,
             'title': self.title,
+            'name': self.name,
             'port': self.port,
             'description': self.description,
         }
@@ -60,6 +63,7 @@ class Flag(db.Model):
 
 class Tick(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Jakarta')), nullable=False)
 
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,4 +90,11 @@ class Calculation(db.Model):
     challenge = relationship("Challenge")
     tick = relationship("Tick")
     
-    
+class Config(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_started = db.Column(db.Boolean, default=False)
+    ticks_count = db.Column(db.Integer, default=0)
+    tick_duration_seconds = db.Column(db.Integer, default=60)  # Example: 60 seconds per tick
+
+    def __repr__(self):
+        return f"<Config(id={self.id}, challenge_started={self.challenge_started}, ticks_count={self.ticks_count}, tick_duration_seconds={self.tick_duration_seconds})>"

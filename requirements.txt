@@ -4,3 +4,6 @@ openai
 mysqlclient2
 python_dotenv
 openai
+apscheduler
+flask_apscheduler
+tzlocal==2.1

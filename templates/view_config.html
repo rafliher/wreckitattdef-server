@@ -1,0 +1,63 @@
+<!-- view_config.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Current Configuration{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Current Tick Information</h5>
+            {% if last_tick %}
+                <p><strong>Last Tick ID:</strong> {{ last_tick.id }}</p>
+                <p><strong>Last Tick Start Time:</strong> {{ last_tick_start_time.strftime('%Y-%m-%d %H:%M:%S') if last_tick_start_time else 'N/A' }}</p>
+            {% else %}
+                <p>No tick information available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <h1>Current Configuration</h1>
+
+    <form method="post" action="{{ url_for('update_config') }}">
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">Challenge Status</h5>
+                <div class="form-group">
+                    <label>Challenge Started</label><br>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="challenge_started_yes" name="challenge_started" value="true" {% if config.challenge_started %}checked{% endif %}>
+                        <label class="form-check-label" for="challenge_started_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="challenge_started_no" name="challenge_started" value="false" {% if not config.challenge_started %}checked{% endif %}>
+                        <label class="form-check-label" for="challenge_started_no">No</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="card-title">Competition Ticks</h5>
+                        <div class="form-group">
+                            <input type="number" class="form-control" id="ticks_count" name="ticks_count" value="{{ config.ticks_count }}" placeholder="Ticks Count" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="card-title">Tick Duration</h5>
+                        <div class="form-group">
+                            <input type="number" class="form-control" id="tick_duration_seconds" name="tick_duration_seconds" value="{{ config.tick_duration_seconds }}" placeholder="Tick Duration (seconds)" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Update Configuration</button>
+    </form>
+</div>
+{% endblock %}

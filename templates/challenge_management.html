@@ -13,7 +13,7 @@
         <table class="table" id="challengeTable">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Name</th>
                     <th>Title</th>
                     <th>Port</th>
                     <th>Description</th>
@@ -23,7 +23,7 @@
             <tbody>
                 {% for challenge in challenges %}
                 <tr>
-                    <td>{{ challenge.id }}</td>
+                    <td>{{ challenge.name }}</td>
                     <td>{{ challenge.title }}</td>
                     <td>{{ challenge.port }}</td>
                     <td>{{ challenge.description }}</td>
@@ -52,12 +52,14 @@
                 Swal.fire({
                     title: 'Add New Challenge',
                     html: '<input id="titleInput" class="swal2-input" placeholder="Title">' +
+                        '<input id="nameInput" class="swal2-input" placeholder="Name">' +
                         '<input id="portInput" type="number" class="swal2-input" placeholder="Port">' +
                         '<textarea id="descriptionInput" class="swal2-textarea" style="width: 100%;margin: 0px 0px 3px 0px;resize: none;" placeholder="Description"></textarea>',
                     showCancelButton: true,
                     confirmButtonText: 'Add',
                     showLoaderOnConfirm: true,
                     preConfirm: () => {
+                        const name = $('#nameInput').val();
                         const title = $('#titleInput').val();
                         const port = $('#portInput').val();
                         const description = $('#descriptionInput').val();
@@ -65,6 +67,7 @@
                             url: '/challenge',
                             type: 'POST',
                             data: {
+                                name: name,
                                 title: title,
                                 port: port,
                                 description: description
@@ -148,6 +151,8 @@
                     html: `
                         <p style="margin: 3px 0px 1px 0px;">ID</p>
                         <input type="text" id="id" value="${challengeData.id}" class="swal2-input" disabled style="width: 350px; margin-top: 0px;">
+                        <p style="margin: 3px 0px 1px 0px;">Name</p>
+                        <input type="text" id="title" value="${challengeData.name}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
                         <p style="margin: 3px 0px 1px 0px;">Title</p>
                         <input type="text" id="title" value="${challengeData.title}" class="swal2-input" style="width: 350px; margin: 0px 0px 10px 0px;" required>
                         <p style="margin: 3px 0px 1px 0px;">Port</p>
@@ -162,6 +167,7 @@
                     showLoaderOnConfirm: true,
                     preConfirm: () => {
                         const title = $('#title').val();
+                        const name = $('#name').val();
                         const port = $('#port').val();
                         const description = $('#description').val();
                         return $.ajax({
@@ -169,6 +175,7 @@
                             type: 'PUT',
                             data: {
                                 title: title,
+                                name: name,
                                 port: port,
                                 description: description
                             }
