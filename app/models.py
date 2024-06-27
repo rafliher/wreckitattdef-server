@@ -12,9 +12,9 @@ class User(db.Model, UserMixin):
     host_ip = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-    attacks = relationship("Submission", foreign_keys="[Submission.attacker_id]")
-    breachs = relationship("Submission", foreign_keys="[Submission.target_id]")
-    calculations = relationship("Calculation")
+    attacks = relationship("Submission", foreign_keys="[Submission.attacker_id]", cascade="all, delete")
+    breachs = relationship("Submission", foreign_keys="[Submission.target_id]", cascade="all, delete")
+    calculations = relationship("Calculation", cascade="all, delete")
 
     def serialize(self):
         return {
@@ -35,7 +35,7 @@ class Challenge(db.Model):
     title = db.Column(db.String(255), nullable=False)
     port = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, nullable=False)
-    submissions = relationship("Submission")
+    submissions = relationship("Submission", cascade="all, delete")
     
     def serialize(self):
         return {
@@ -51,19 +51,24 @@ class Challenge(db.Model):
 
 class Flag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
     string = db.Column(db.Text, nullable=False)
     tick_id = db.Column(db.Integer, db.ForeignKey('tick.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     chall_id = db.Column(db.Integer, db.ForeignKey('challenge.id'))
     
-    tick = relationship("Tick")
-    user = relationship("User")
-    challenge = relationship("Challenge")
+    tick = relationship("Tick", cascade="all, delete")
+    user = relationship("User", cascade="all, delete")
+    challenge = relationship("Challenge", cascade="all, delete")
 
 class Tick(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Jakarta')), nullable=False)
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'created_at': self.created_at
+        }
 
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -72,10 +77,10 @@ class Submission(db.Model):
     chall_id = db.Column(db.Integer, db.ForeignKey('challenge.id'))
     tick_id = db.Column(db.Integer, db.ForeignKey('tick.id'))
     
-    attacker = relationship("User", foreign_keys=[attacker_id], overlaps="attacks")
-    target = relationship("User", foreign_keys=[target_id], overlaps="breachs")
-    challenge = relationship("Challenge", overlaps="submissions")
-    tick = relationship("Tick")
+    attacker = relationship("User", foreign_keys=[attacker_id], overlaps="attacks", cascade="all, delete")
+    target = relationship("User", foreign_keys=[target_id], overlaps="breachs", cascade="all, delete")
+    challenge = relationship("Challenge", overlaps="submissions", cascade="all, delete")
+    tick = relationship("Tick", cascade="all, delete")
     
 class Calculation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,15 +91,23 @@ class Calculation(db.Model):
     chall_id = db.Column(db.Integer, db.ForeignKey('challenge.id'))
     tick_id = db.Column(db.Integer, db.ForeignKey('tick.id'))
     
-    user = relationship("User", overlaps="calculations")
-    challenge = relationship("Challenge")
-    tick = relationship("Tick")
+    user = relationship("User", overlaps="calculations", cascade="all, delete")
+    challenge = relationship("Challenge", cascade="all, delete")
+    tick = relationship("Tick", cascade="all, delete")
     
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     challenge_started = db.Column(db.Boolean, default=False)
     ticks_count = db.Column(db.Integer, default=0)
     tick_duration_seconds = db.Column(db.Integer, default=60)  # Example: 60 seconds per tick
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'challenge_started': self.challenge_started,
+            'ticks_count': self.ticks_count,
+            'tick_duration_seconds': self.tick_duration_seconds,
+        }
 
     def __repr__(self):
         return f"<Config(id={self.id}, challenge_started={self.challenge_started}, ticks_count={self.ticks_count}, tick_duration_seconds={self.tick_duration_seconds})>"

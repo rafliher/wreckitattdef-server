@@ -3,7 +3,16 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from app import app, db
 from app.models import User
 from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
+
+@app.route('/api/user', methods=['GET'])
+@jwt_required()
+def api_user():
+    users = User.query.filter(User.is_admin == False).all()
+
+    users_list = [user.serialize() for user in users]
+    return jsonify(users_list), 200
 
 @app.route('/user', methods=['GET'])
 @login_required

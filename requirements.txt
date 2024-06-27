@@ -1,9 +1,12 @@
-flask
-flask_login
-openai
-mysqlclient2
+flask==3.0.3
+flask_login==0.6.3
+mysqlclient
+flask-sqlalchemy==3.0.2
 python_dotenv
-openai
 apscheduler
 flask_apscheduler
 tzlocal==2.1
+flask_cors
+Werkzeug~=2.0.0
+flask_jwt_extended==4.6.0
+flask-timeloop==0.2.4

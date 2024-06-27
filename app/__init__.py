@@ -9,6 +9,8 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 import datetime
 from flask_apscheduler import APScheduler
+from timeloop import Timeloop
+from app.extensions import timeloop
 
 app = Flask(__name__, template_folder='../templates')
 app.static_folder = '../static'
@@ -24,13 +26,17 @@ CORS(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+timeloop.init_app(app)
+timeloop.start()
+
 # Initialize APScheduler
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
 
+
 from app import models, views, controllers
-from app.controllers import main_controller, auth_controller, user_controller, challenge_controller, tick_controller
+from app.controllers import main_controller, auth_controller, user_controller, challenge_controller, tick_controller, flag_controller, score_controller
 
 # Example job to call next_tick every tick duration
 def execute_next_tick():
@@ -42,14 +48,24 @@ def execute_next_tick():
 def schedule_next_tick():
     with app.app_context():
         config = models.Config.query.first()
-        if config and config.challenge_started and not tick_controller.tick_started:
+        if config and config.challenge_started and (scheduler.get_job("next_tick_job") is None):
             tick_duration_seconds = config.tick_duration_seconds
-            scheduler.add_job(func=execute_next_tick, trigger='interval', id="next_tick_job", seconds=tick_duration_seconds)
-            tick_controller.tick_started = True
+            scheduler.add_job(func=execute_next_tick, trigger='interval', id=f"next_tick_job", seconds=tick_duration_seconds, max_instances=1)
 
-def schedule_listener():
-    with app.app_context():
-        scheduler.add_job(func=schedule_next_tick, trigger='interval', id="start_tick", seconds=2)
+@timeloop.job(interval = datetime.timedelta(seconds = 10))
+def sample_job_every_2s():
+    schedule_next_tick()
+
+# def schedule_listener():
+#     # with app.app_context():
+#     config = models.Config.query.first()
+#     if config and config.challenge_started:
+#         tick_duration_seconds = config.tick_duration_seconds
+#         scheduler.add_job(func=execute_next_tick, trigger='interval', id="start_tick", seconds=tick_duration_seconds, max_instances=1)
+
+# def schedule_listener():
+#     # with app.app_context():
+#     scheduler.add_job(func=schedule_next_tick, trigger='interval', id="start_tick", seconds=2, max_instances=1)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -58,7 +74,7 @@ def load_user(user_id):
 # push context manually to app
 with app.app_context():
     try:
-        schedule_listener()  # Start scheduling initially
+        # schedule_listener()  # Start scheduling initially
         # Check if an admin user exists
         admin_user = models.User.query.filter_by(is_admin=True).first()
 
