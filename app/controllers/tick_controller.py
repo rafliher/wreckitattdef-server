@@ -101,7 +101,7 @@ def next_tick():
             flag_string = f'WreckIT5{{{flag_value}}}'  # Format the flag as required
             flag_distribution_url = f'http://{user.host_ip}/flag'
             try:
-                response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge_name': challenge.name})
+                response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge': challenge.name}, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
                 if response.status_code != 200:
                     print(f"Failed to distribute flag for {challenge.name} to {user.host_ip}")
                     # return f"Failed to distribute flag for {challenge.name} to {user.host_ip}"

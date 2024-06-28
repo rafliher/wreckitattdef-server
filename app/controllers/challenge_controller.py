@@ -26,7 +26,6 @@ def restart_challenge(challenge):
 
     try:
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
-
         if response.status_code == 200:
             return jsonify(response.json()), 200
         else:
@@ -59,6 +58,8 @@ def activate_challenge(challenge):
     url = f'http://{user.host_ip}/activate/{challenge}'
 
     try:
+        print("aaaa")
+        print(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD'))
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
 
         if response.status_code == 200:
