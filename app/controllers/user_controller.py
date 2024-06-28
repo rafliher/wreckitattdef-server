@@ -112,7 +112,7 @@ def import_users():
 
     for user_data in json_data:
         if not isinstance(user_data, dict):
-            flash(f'Invalid user data format! Skipping user because not a dict: {user_data}', 'warning')
+            flash('Invalid user data format! Skipping user because not a dict: ' + user_data, 'warning')
             continue
 
         username = user_data.get('username')
@@ -120,7 +120,7 @@ def import_users():
         host_ip = user_data.get('host_ip')
 
         if not all([username, password_hash, host_ip]):
-            flash(f'Incomplete user data! Skipping user because invalid format: {user_data}', 'warning')
+            flash('Incomplete user data! Skipping user because invalid format: ' + user_data, 'warning')
             continue
 
         existing_user = User.query.filter_by(username=username).first()

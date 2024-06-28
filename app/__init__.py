@@ -50,7 +50,7 @@ def schedule_next_tick():
         config = models.Config.query.first()
         if config and config.challenge_started and (scheduler.get_job("next_tick_job") is None):
             tick_duration_seconds = config.tick_duration_seconds
-            scheduler.add_job(func=execute_next_tick, trigger='interval', id=f"next_tick_job", seconds=tick_duration_seconds, max_instances=1)
+            scheduler.add_job(func=execute_next_tick, trigger='interval', id="next_tick_job", seconds=tick_duration_seconds, max_instances=1)
 
 @timeloop.job(interval = datetime.timedelta(seconds = 10))
 def sample_job_every_2s():

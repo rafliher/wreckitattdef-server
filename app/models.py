@@ -110,4 +110,4 @@ class Config(db.Model):
         }
 
     def __repr__(self):
-        return f"<Config(id={self.id}, challenge_started={self.challenge_started}, ticks_count={self.ticks_count}, tick_duration_seconds={self.tick_duration_seconds})>"
+        return "<Config(id=" + self.id + ", challenge_started=" + self.challenge_started + ", ticks_count=" + self.ticks_count + ", tick_duration_seconds=" + self.tick_duration_seconds + ")>"

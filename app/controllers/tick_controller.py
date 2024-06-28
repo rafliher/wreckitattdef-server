@@ -78,7 +78,7 @@ def next_tick():
     else:
         new_tick_id = 1
         
-    print(f"[{datetime.now(pytz.timezone('Asia/Jakarta'))}] Tick {new_tick_id} started")
+    print("[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Tick " + new_tick_id + " started")
 
 
     # Check if tick count in config is reached
@@ -86,7 +86,7 @@ def next_tick():
     if config and new_tick_id > config.ticks_count:
         config.challenge_started = False
         db.session.commit()
-        return f"[{datetime.now(pytz.timezone('Asia/Jakarta'))}] Final tick reached. Challenge completed."
+        return "[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Final tick reached. Challenge completed."
 
     new_tick = Tick(id=new_tick_id)
     db.session.add(new_tick)
@@ -98,13 +98,12 @@ def next_tick():
     for challenge in challenges:
         for user in users:
             flag_value = ''.join(random.choices(string.ascii_letters + string.digits, k=64))
-            flag_string = f'WreckIT5{{{flag_value}}}'  # Format the flag as required
-            flag_distribution_url = f'http://{user.host_ip}/flag'
+            flag_string = 'WreckIT5{' + flag_value + '}'  # Format the flag as required
+            flag_distribution_url = 'http://' + user.host_ip + '/flag'
             try:
                 response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge': challenge.name}, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
                 if response.status_code != 200:
-                    print(f"Failed to distribute flag for {challenge.name} to {user.host_ip}")
-                    # return f"Failed to distribute flag for {challenge.name} to {user.host_ip}"
+                    print("Failed to distribute flag for " + challenge.name + " to " + user.host_ip)
 
                 # Save flag information to Flag model in database
                 flag = Flag(
@@ -115,7 +114,7 @@ def next_tick():
                 )
                 db.session.add(flag)
             except requests.RequestException as e:
-                print (f"An error occurred while distributing flag for {challenge.name} to {user.host_ip}: {str(e)}")
+                print ("An error occurred while distributing flag for " + challenge.name + " to " + user.host_ip + ": " + str(e))
 
     # Commit all changes to the database
     db.session.commit()
@@ -132,7 +131,7 @@ def next_tick():
                 failed_defenses = Submission.query.filter_by(target=user, chall_id=challenge.id, tick_id=last_tick.id).count()
                 defense_score = (len(users) - 1) - failed_defenses
 
-                check_url = f'http://{user.host_ip}/check/{challenge.name}'
+                check_url = 'http://' + user.host_ip + '/check/' + challenge
                 try:
                     check_response = requests.post(check_url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
                     if check_response.status_code == 200 and check_response.json().get('success'):
@@ -156,7 +155,7 @@ def next_tick():
     # Commit all changes related to score calculations to the database
     db.session.commit()
 
-    return f"[{datetime.now(pytz.timezone('Asia/Jakarta'))}] Tick {new_tick_id} processed successfully."
+    return "[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Tick {new_tick_id} processed successfully."
 
 @app.route('/reset_challenge', methods=['POST'])
 @login_required
@@ -187,6 +186,6 @@ def reset_challenge():
         print(e)
         
         db.session.rollback()
-        flash(f'An error occurred while resetting the challenge data: {str(e)}', 'danger')
+        flash('An error occurred while resetting the challenge data: ' + str(e), 'danger')
 
     return redirect(url_for('view_config'))

@@ -22,7 +22,7 @@ def api_challenges():
 def restart_challenge(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    url = f'http://{user.host_ip}/restart/{challenge}'
+    url = 'http://' + user.host_ip + '/restart/' + challenge
 
     try:
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
@@ -31,14 +31,14 @@ def restart_challenge(challenge):
         else:
             return jsonify({"message": "Failed to restart challenge.", "status_code": response.status_code}), response.status_code
     except requests.RequestException as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"message": "An error occurred:" + str(e)}), 500
 
 @app.route('/api/rollback/<string:challenge>', methods=['POST'])
 @jwt_required()
 def rollback_challenge(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    url = f'http://{user.host_ip}/rollback/{challenge}'
+    url = 'http://' + user.host_ip + '/rollback/' + challenge
 
     try:
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
@@ -48,14 +48,14 @@ def rollback_challenge(challenge):
         else:
             return jsonify({"message": "Failed to rollback challenge.", "status_code": response.status_code}), response.status_code
     except requests.RequestException as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"message": "An error occurred:" + str(e)}), 500
     
 @app.route('/api/activate/<string:challenge>', methods=['POST'])
 @jwt_required()
 def activate_challenge(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    url = f'http://{user.host_ip}/activate/{challenge}'
+    url = 'http://' + user.host_ip + '/activate/' + challenge
 
     try:
         print("aaaa")
@@ -67,14 +67,14 @@ def activate_challenge(challenge):
         else:
             return jsonify({"message": "Failed to activate challenge.", "status_code": response.status_code}), response.status_code
     except requests.RequestException as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"message": "An error occurred:" + str(e)}), 500
 
 @app.route('/api/deactivate/<string:challenge>', methods=['POST'])
 @jwt_required()
 def deactivate_challenge(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    url = f'http://{user.host_ip}/deactivate/{challenge}'
+    url = 'http://' + user.host_ip + '/deactivate/' + challenge
 
     try:
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
@@ -84,14 +84,14 @@ def deactivate_challenge(challenge):
         else:
             return jsonify({"message": "Failed to deactivate challenge.", "status_code": response.status_code}), response.status_code
     except requests.RequestException as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"message": "An error occurred:" + str(e)}), 500
 
 @app.route('/api/credential/<string:challenge>', methods=['POST'])
 @jwt_required()
 def challenge_credential(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    url = f'http://{user.host_ip}/credential/{challenge}'
+    url = 'http://' + user.host_ip + '/credential/' + challenge
 
     try:
         response = requests.get(url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
@@ -101,7 +101,7 @@ def challenge_credential(challenge):
         else:
             return jsonify({"message": "Failed to fetch challenge credential.", "status_code": response.status_code}), response.status_code
     except requests.RequestException as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"message": "An error occurred:" + str(e)}), 500
 
 @app.route('/challenges', methods=['GET'])
 @login_required
@@ -192,7 +192,7 @@ def import_challenges():
 
     for challenge_data in json_data:
         if not isinstance(challenge_data, dict):
-            flash(f'Invalid challenge data format! Skipping user because not a dict: {challenge_data}', 'warning')
+            flash('Invalid challenge data format! Skipping challenge because not a dict: ' + challenge_data, 'warning')
             continue
 
         title = challenge_data.get('title')
@@ -200,7 +200,7 @@ def import_challenges():
         description = challenge_data.get('description')
 
         if not all([title, port, description]):
-            flash(f'Incomplete challenge data! Skipping user because invalid format: {challenge_data}', 'warning')
+            flash('Incomplete challenge data ! Skipping challenge because invalid format: ' + challenge_data, 'warning')
             continue
         
         existing_challenge = Challenge.query.filter_by(title=title).first()
