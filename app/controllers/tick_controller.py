@@ -22,7 +22,9 @@ def api_tick():
         config = Config()
         
     last_tick = Tick.query.order_by(Tick.id.desc()).first()
-    return jsonify({"config": config.serialize(), "last_tick": last_tick.serialize()}), 200
+    if last_tick:
+        last_tick = last_tick.serialize()
+    return jsonify({"config": config.serialize(), "last_tick": last_tick}), 200
 
 @app.route('/tick', methods=['GET'])
 @login_required
