@@ -1,6 +1,6 @@
 from flask import jsonify, render_template, request, flash, redirect, url_for
 from app import app, db
-from app.models import Tick, Flag, Challenge, Submission, Calculation, Config, User
+from app.models import Tick, Flag, Challenge, Submission, Calculation, Config, User, Round, Check
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required
 import requests
@@ -14,18 +14,21 @@ import pytz
 
 load_dotenv()
 
-@app.route('/api/tick', methods=['GET'])
-def api_tick():
+@app.route('/api/round', methods=['GET'])
+def api_round():
     config = Config.query.first()
     if not config:
         config = Config()
         
+    last_round = Round.query.order_by(Round.id.desc()).first()
     last_tick = Tick.query.order_by(Tick.id.desc()).first()
+    if last_round:
+        last_round = last_round.serialize()
     if last_tick:
         last_tick = last_tick.serialize()
-    return jsonify({"config": config.serialize(), "last_tick": last_tick}), 200
+    return jsonify({"config": config.serialize(), "last_round": last_round, "last_tick": last_tick}), 200
 
-@app.route('/tick', methods=['GET'])
+@app.route('/round', methods=['GET'])
 @login_required
 def view_config():
     if not current_user.is_admin:
@@ -37,10 +40,12 @@ def view_config():
         config = Config()  # Create a new config if none exists
 
     # Fetch information about the last tick and its start time
+    last_round = Round.query.order_by(Round.id.desc()).first()
+    last_round_start_time = last_round.created_at if last_round else None
     last_tick = Tick.query.order_by(Tick.id.desc()).first()
     last_tick_start_time = last_tick.created_at if last_tick else None
 
-    return render_template('view_config.html', config=config, last_tick=last_tick, last_tick_start_time=last_tick_start_time)
+    return render_template('view_config.html', config=config, last_round=last_round, last_round_start_time=last_round_start_time, last_tick=last_tick, last_tick_start_time=last_tick_start_time)
 
 @app.route('/update_config', methods=['POST'])
 @login_required
@@ -61,7 +66,9 @@ def update_config():
         config.ticks_count = int(request.form.get('ticks_count', 0))  # Ensure integer value
     if request.form.get('tick_duration_seconds'):
         config.tick_duration_seconds = int(request.form.get('tick_duration_seconds', 60))  # Ensure integer value
-
+    if request.form.get('tick_per_round'):
+        config.tick_duration_seconds = int(request.form.get('tick_per_round', 60))  # Ensure integer value
+        
     db.session.add(config)
     db.session.commit()
     
@@ -81,7 +88,6 @@ def next_tick():
         
     print("[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Tick " + str(new_tick_id) + " started")
 
-
     # Check if tick count in config is reached
     config = Config.query.first()
     if config and new_tick_id > config.ticks_count:
@@ -92,69 +98,71 @@ def next_tick():
     new_tick = Tick(id=new_tick_id)
     db.session.add(new_tick)
     db.session.commit()
-
-    # Generate team*chall flag and distribute each by POST /flag to node
+    
     challenges = Challenge.query.all()
     users = User.query.filter_by(is_admin=False).all()  # Exclude admin users
-    for challenge in challenges:
-        for user in users:
-            flag_value = ''.join(random.choices(string.ascii_letters + string.digits, k=64))
-            flag_string = 'WreckIT50{' + flag_value + '}'  # Format the flag as required
-            flag_distribution_url = 'http://' + user.host_ip + '/flag'
+
+    # check challenge status
+    for user in users:
+        for challenge in challenges:
+            check_url = 'http://' + user.host_ip + '/check/' + challenge.name
             try:
-                response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge': challenge.name}, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
-                if response.status_code != 200:
-                    print("Failed to distribute flag for " + challenge.name + " to " + user.host_ip)
+                check_response = requests.get(check_url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+                if check_response.status_code == 200 and check_response.json().get('success'):
+                    status = 'up'  # Success status
+                else:
+                    status = 'error'  # Error status
+            except requests.RequestException:
+                status = 'down'  # Error status if request fails
 
-                # Save flag information to Flag model in database
-                flag = Flag(
-                    tick_id=new_tick_id,
-                    user_id=user.id,
-                    chall_id=challenge.id,
-                    string=flag_value
-                )
-                db.session.add(flag)
-            except requests.RequestException as e:
-                print ("An error occurred while distributing flag for " + challenge.name + " to " + user.host_ip + ": " + str(e))
+            check = Check(
+                status=status,
+                user_id=user.id,
+                chall_id=challenge.id,
+                tick_id=new_tick_id
+            )
+            db.session.add(check)
 
-    # Commit all changes to the database
-    db.session.commit()
+        db.session.commit()
 
-    if last_tick:
-        # Calculate scores and save to Calculation model
-        for user in users:
-            for challenge in challenges:
-                # Calculate attack score
-                success_attacks = Submission.query.filter_by(attacker=user, chall_id=challenge.id, tick_id=last_tick.id).count()
-                attack_score = success_attacks
-
-                # Calculate defense score
-                failed_defenses = Submission.query.filter_by(target=user, chall_id=challenge.id, tick_id=last_tick.id).count()
-                defense_score = (len(users) - 1) - failed_defenses
-
-                check_url = 'http://' + user.host_ip + '/check/' + challenge.name
+    # call every 5 tick
+    if new_tick_id % 5 == 1:
+        last_round = Round.query.order_by(Round.id.desc()).first()
+        if last_round:
+            new_round_id = last_round.id + 1
+        else:
+            new_round_id = 1
+            
+        new_round = Round(id=new_round_id)
+        db.session.add(new_round)
+        db.session.commit()
+            
+        # Generate team*chall flag and distribute each by POST /flag to node
+        for challenge in challenges:
+            for user in users:
+                flag_value = ''.join(random.choices(string.ascii_letters + string.digits, k=64))
+                flag_string = 'WreckIT50{' + flag_value + '}'  # Format the flag as required
+                flag_distribution_url = 'http://' + user.host_ip + '/flag'
                 try:
-                    check_response = requests.get(check_url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
-                    if check_response.status_code == 200 and check_response.json().get('success'):
-                        status = 'up'  # Success status
+                    response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge': challenge.name}, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+                    if response.status_code != 200:
+                        print("Failed to distribute flag for " + challenge.name + " to " + user.host_ip)
                     else:
-                        status = 'error'  # Error status
-                except requests.RequestException:
-                    status = 'down'  # Error status if request fails
+                        print("Distributed flag for " + challenge.name + " to " + user.host_ip)
 
-                # Save the calculated data to Calculation model
-                calculation = Calculation(
-                    attack=attack_score,
-                    defense=defense_score,
-                    status=status,
-                    user_id=user.id,
-                    chall_id=challenge.id,
-                    tick_id=new_tick_id
-                )
-                db.session.add(calculation)
+                    # Save flag information to Flag model in database
+                    flag = Flag(
+                        round_id=new_round_id,
+                        user_id=user.id,
+                        chall_id=challenge.id,
+                        string=flag_value
+                    )
+                    db.session.add(flag)
+                except requests.RequestException as e:
+                    print ("An error occurred while distributing flag for " + challenge.name + " to " + user.host_ip + ": " + str(e))
 
-    # Commit all changes related to score calculations to the database
-    db.session.commit()
+        # Commit all changes to the database
+        db.session.commit()
 
     return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + f'] Tick {new_tick_id} processed successfully.'
 
@@ -169,8 +177,10 @@ def reset_challenge():
     try:
         Submission.query.delete()
         Calculation.query.delete()
+        Check.query.delete()
         Flag.query.delete()
         Tick.query.delete()
+        Round.query.delete()
         
         config = Config.query.first()
         if not config:

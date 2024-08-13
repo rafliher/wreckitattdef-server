@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import app, db, socketio  
-from app.models import Tick, Flag, Submission, User, Challenge, Config
+from app.models import Tick, Flag, Submission, User, Challenge, Config, Round
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 import pytz
@@ -29,10 +29,15 @@ def submit_flag():
     if not current_tick:
         return jsonify({"message": "No current tick found"}), 404
 
+    # Get the current tick
+    current_round = Round.query.order_by(Round.id.desc()).first()
+    if not current_round:
+        return jsonify({"message": "No current round found"}), 404
+    
     # Check if the flag matches the flag in the table for the current tick
     flag = Flag.query.filter_by(
         string=flag_value,
-        tick_id=current_tick.id
+        round_id=current_round.id
     ).first()
 
     if not flag:
@@ -44,7 +49,7 @@ def submit_flag():
     
     # Check if the flag has already been submitted by the same user
     existing_submission = Submission.query.filter_by(
-        tick_id=current_tick.id,
+        round_id=current_round.id,
         chall_id=flag.chall_id,
         attacker_id=user.id,
         target_id=flag.user_id,
@@ -55,7 +60,7 @@ def submit_flag():
 
     # Insert into Submission table
     submission = Submission(
-        tick_id=current_tick.id,
+        round_id=current_round.id,
         chall_id=flag.chall_id,
         attacker_id=user.id,
         target_id=flag.user_id,
@@ -67,7 +72,7 @@ def submit_flag():
     socketio.emit('flag_submitted', {
         'attacker': username,
         'target': flag.user.username,  # Assuming the User model has a username field
-        'challenge': flag.chall_id,  # Assuming Challenge model has a title field
+        'challenge': flag.challenge.name,  # Assuming Challenge model has a title field
         'timestamp': datetime.utcnow().isoformat()
     })
 

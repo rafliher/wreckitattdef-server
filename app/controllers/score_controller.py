@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import app, db
-from app.models import User, Calculation, Challenge, Tick, Submission
+from app.models import User, Calculation, Challenge, Tick, Round, Submission, Check
 from flask_jwt_extended import jwt_required
 
 @app.route('/api/scoreboard', methods=['GET'])
@@ -9,6 +9,7 @@ def get_scoreboard():
     users = User.query.filter_by(is_admin=False).all()
     challenges = Challenge.query.all()
     scoreboard = []
+    last_round = Round.query.order_by(Round.id.desc()).first()
 
     for user in users:
         user_scores = {
@@ -26,35 +27,39 @@ def get_scoreboard():
         }
         
         for challenge in challenges:
-            user_scores["attacks"][challenge.name] = 0
-            user_scores["defenses"][challenge.name] = 0
-            user_scores["flags"][challenge.name] = {"captured": 0, "stolen": 0}
+            # Calculate attack score
+            success_attacks = Submission.query.filter_by(attacker=user, chall_id=challenge.id).count()
+
+            # Calculate defense score
+            failed_defenses = Submission.query.filter_by(target=user, chall_id=challenge.id).count()
+            total_round = (last_round.id if last_round else 1)
+            defense_score = ((len(users) - 1) * total_round) - failed_defenses
+            
+            user_scores["attacks"][challenge.name] = success_attacks
+            user_scores["defenses"][challenge.name] = defense_score
+            user_scores["flags"][challenge.name] = {"captured": success_attacks, "stolen": failed_defenses}
             user_scores["sla"][challenge.name] = "DOWN"
             user_scores["passed_checks"][challenge.name] = 0
             user_scores["total_checks"][challenge.name] = 0
 
-        calculations = Calculation.query.filter_by(user_id=user.id).order_by(Calculation.tick_id.desc()).all()
+        checks = Check.query.filter_by(user_id=user.id).order_by(Check.tick_id.desc()).all()
         passed_checks = 0
         total_checks = 0
-        
-        for calc in calculations:
-            challenge_name = Challenge.query.get(calc.chall_id).name
+
+        for check in checks:
+            challenge_name = Challenge.query.get(check.chall_id).name
             
-            user_scores["attacks"][challenge_name] += calc.attack
-            user_scores["defenses"][challenge_name] += calc.defense
             user_scores["total_checks"][challenge_name] += 1
 
-            if calc.status == "up":
+            if check.status == "up":
                 user_scores["passed_checks"][challenge_name] += 1
 
-            user_scores["flags"][challenge_name]["captured"] += Submission.query.filter_by(attacker_id=user.id, chall_id=calc.chall_id).count()
-            user_scores["flags"][challenge_name]["stolen"] += Submission.query.filter_by(target_id=user.id, chall_id=calc.chall_id).count()
-            user_scores["sla"][challenge_name] = calc.status.upper()
+            user_scores["sla"][challenge_name] = check.status.upper()
 
         attack_points = 0
         defense_points = 0
 
-        for challenge in challenges:
+        for challenge in challenges:            
             challenge_name = challenge.name
             attack_points += user_scores["attacks"][challenge_name]
             defense_points += user_scores["defenses"][challenge_name]
