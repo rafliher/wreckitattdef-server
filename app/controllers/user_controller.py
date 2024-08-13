@@ -7,7 +7,6 @@ from flask_jwt_extended import jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
 @app.route('/api/user', methods=['GET'])
-@jwt_required()
 def api_user():
     users = User.query.filter(User.is_admin == False).all()
 
