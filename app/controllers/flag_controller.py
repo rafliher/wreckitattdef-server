@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import app, db
+from app import app, db, socketio  
 from app.models import Tick, Flag, Submission, User, Challenge, Config
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
@@ -63,5 +63,12 @@ def submit_flag():
 
     db.session.add(submission)
     db.session.commit()
+    
+    socketio.emit('flag_submitted', {
+        'attacker': username,
+        'target': flag.user.username,  # Assuming the User model has a username field
+        'challenge': flag.chall_id,  # Assuming Challenge model has a title field
+        'timestamp': datetime.utcnow().isoformat()
+    })
 
     return jsonify({"message": "Flag submitted successfully"}), 200

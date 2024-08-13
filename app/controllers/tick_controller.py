@@ -99,7 +99,7 @@ def next_tick():
     for challenge in challenges:
         for user in users:
             flag_value = ''.join(random.choices(string.ascii_letters + string.digits, k=64))
-            flag_string = 'WreckIT5{' + flag_value + '}'  # Format the flag as required
+            flag_string = 'WreckIT50{' + flag_value + '}'  # Format the flag as required
             flag_distribution_url = 'http://' + user.host_ip + '/flag'
             try:
                 response = requests.post(flag_distribution_url, json={'flag': flag_string, 'challenge': challenge.name}, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))

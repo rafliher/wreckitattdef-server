@@ -11,6 +11,7 @@ import datetime
 from flask_apscheduler import APScheduler
 from timeloop import Timeloop
 from app.extensions import timeloop
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__, template_folder='../templates')
 app.static_folder = '../static'
@@ -34,6 +35,10 @@ scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
 
+socketio = SocketIO(app, cors_allowed_origins="*")
+@socketio.on('connect')
+def test_connect():
+    emit('after connect',  {'message':'socket connected'})
 
 from app import models, views, controllers
 from app.controllers import main_controller, auth_controller, user_controller, challenge_controller, tick_controller, flag_controller, score_controller
