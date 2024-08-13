@@ -86,11 +86,12 @@ def deactivate_challenge(challenge):
     except requests.RequestException as e:
         return jsonify({"message": "An error occurred:" + str(e)}), 500
 
-@app.route('/api/credential/<string:challenge>', methods=['POST'])
+@app.route('/api/credential/<string:challenge>', methods=['GET'])
 @jwt_required()
 def challenge_credential(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
+    print(user)
     url = 'http://' + user.host_ip + '/credential/' + challenge
 
     try:
@@ -148,7 +149,8 @@ def edit_challenge(challenge_id):
         flash('You do not have permission to access this page.', 'danger')
         return redirect(url_for('dashboard'))
     
-    challenge = Challenge.query.get_or_404(challenge_id)
+    challenge = Challenge.query.get_or_404(challenge_id)    
+    challenge.name = request.form.get('name')
     challenge.title = request.form.get('title')
     challenge.port = request.form.get('port')
     challenge.description = request.form.get('description')

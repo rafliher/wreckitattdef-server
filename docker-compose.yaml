@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: production
+      MYSQL_HOST: db
+      MYSQL_DATABASE: db_wiad
+      MYSQL_USER: flaskapp
+      MYSQL_PASSWORD: asdadwacsa
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: aopkdosap
+      MYSQL_DATABASE: db_wiad
+      MYSQL_USER: flaskapp
+      MYSQL_PASSWORD: asdadwacsa
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

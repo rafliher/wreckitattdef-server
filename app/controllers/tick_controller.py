@@ -15,7 +15,6 @@ import pytz
 load_dotenv()
 
 @app.route('/api/tick', methods=['GET'])
-@jwt_required()
 def api_tick():
     config = Config.query.first()
     if not config:
@@ -80,7 +79,7 @@ def next_tick():
     else:
         new_tick_id = 1
         
-    print("[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Tick " + new_tick_id + " started")
+    print("[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Tick " + str(new_tick_id) + " started")
 
 
     # Check if tick count in config is reached
@@ -88,7 +87,7 @@ def next_tick():
     if config and new_tick_id > config.ticks_count:
         config.challenge_started = False
         db.session.commit()
-        return "[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Final tick reached. Challenge completed."
+        return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Final tick reached. Challenge completed."
 
     new_tick = Tick(id=new_tick_id)
     db.session.add(new_tick)
@@ -133,9 +132,9 @@ def next_tick():
                 failed_defenses = Submission.query.filter_by(target=user, chall_id=challenge.id, tick_id=last_tick.id).count()
                 defense_score = (len(users) - 1) - failed_defenses
 
-                check_url = 'http://' + user.host_ip + '/check/' + challenge
+                check_url = 'http://' + user.host_ip + '/check/' + challenge.name
                 try:
-                    check_response = requests.post(check_url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
+                    check_response = requests.get(check_url, auth=(os.getenv('ADMIN_USERNAME'), os.getenv('ADMIN_PASSWORD')))
                     if check_response.status_code == 200 and check_response.json().get('success'):
                         status = 'up'  # Success status
                     else:
@@ -157,7 +156,7 @@ def next_tick():
     # Commit all changes related to score calculations to the database
     db.session.commit()
 
-    return "[" + datetime.now(pytz.timezone('Asia/Jakarta')) + "] Tick {new_tick_id} processed successfully."
+    return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + f'] Tick {new_tick_id} processed successfully.'
 
 @app.route('/reset_challenge', methods=['POST'])
 @login_required

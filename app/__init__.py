@@ -71,6 +71,11 @@ def sample_job_every_2s():
 def load_user(user_id):
     return models.User.query.get(int(user_id))
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # push context manually to app
 with app.app_context():
     try:
@@ -80,7 +85,7 @@ with app.app_context():
 
         # If no admin user exists, create one
         if not admin_user:
-            admin = models.User(username='admin', password_hash=generate_password_hash('admin'), is_admin=True, host_ip="")
+            admin = models.User(username=os.getenv('ADMIN_USERNAME'), password_hash=generate_password_hash(os.getenv('ADMIN_PASSWORD')), is_admin=True, host_ip="")
             db.session.add(admin)
             db.session.commit()
             
