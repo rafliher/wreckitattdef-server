@@ -7,10 +7,11 @@ services:
       - "5000:5000"
     environment:
       FLASK_ENV: production
-      MYSQL_HOST: db
-      MYSQL_DATABASE: db_wiad
-      MYSQL_USER: flaskapp
-      MYSQL_PASSWORD: asdadwacsa
+      SECRET_KEY: your_secret_key
+      SQLALCHEMY_DATABASE_URI: mysql://flaskapp:asdadwacsa@db/db_wiad
+      SQLALCHEMY_TRACK_MODIFICATIONS: False
+      ADMIN_USERNAME: kekuatanayam
+      ADMIN_PASSWORD: adalahkseimbangan
     depends_on:
       - db
 

@@ -11,3 +11,5 @@ werkzeug==3.0.0
 flask_jwt_extended==4.6.0
 flask-timeloop
 flask-socketio
+timeloop==1.0.2
+requests
