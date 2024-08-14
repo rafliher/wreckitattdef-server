@@ -1,7 +1,7 @@
 # challenge_controller.py
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from app import app, db
-from app.models import Challenge,User
+from app.models import Challenge, User, Submission
 from flask_login import login_required, current_user
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from dotenv import load_dotenv
@@ -13,8 +13,10 @@ load_dotenv()
 @app.route('/api/challenges', methods=['GET'])
 @jwt_required()
 def api_challenges():
+    username = get_jwt_identity()['username']
+    current_user = User.query.filter_by(username=username).first()
     challenges = Challenge.query.all()
-    challenges_list = [challenge.serialize() for challenge in challenges]
+    challenges_list = [challenge.serialize(user_id=current_user.id) for challenge in challenges]
     return jsonify(challenges_list), 200
 
 @app.route('/api/restart/<string:challenge>', methods=['POST'])
@@ -91,7 +93,14 @@ def deactivate_challenge(challenge):
 def challenge_credential(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
-    print(user)
+    
+    challengeObj = Challenge.query.filter_by(name=challenge)
+    if not challengeObj:
+        return jsonify({"message": "Failed to fetch challenge credential.", "status_code": 400}), 400
+    
+    if not challengeObj.is_solved_by_user(user.id):
+        return jsonify({"message": "Failed to fetch challenge credential.", "status_code": 400}), 400
+    
     url = 'http://' + user.host_ip + '/credential/' + challenge
 
     try:

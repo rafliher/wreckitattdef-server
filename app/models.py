@@ -37,6 +37,10 @@ class Challenge(db.Model):
     description = db.Column(db.Text, nullable=False)
     submissions = relationship("Submission", cascade="all, delete")
     
+    def is_solved_by_user(self, user_id):
+        submission = Submission.query.filter_by(chall_id=self.id, attacker_id=user_id).first()
+        return submission is not None
+    
     def serialize(self):
         return {
             'id': self.id,
@@ -44,6 +48,7 @@ class Challenge(db.Model):
             'name': self.name,
             'port': self.port,
             'description': self.description,
+            'isSolved': self.is_solved_by_user(user_id) if user_id else False
         }
 
     def __repr__(self):
