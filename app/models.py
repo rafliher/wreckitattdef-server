@@ -41,7 +41,7 @@ class Challenge(db.Model):
         submission = Submission.query.filter_by(chall_id=self.id, attacker_id=user_id).first()
         return submission is not None
     
-    def serialize(self):
+    def serialize(self, user_id):
         return {
             'id': self.id,
             'title': self.title,

@@ -94,7 +94,7 @@ def challenge_credential(challenge):
     username = get_jwt_identity()['username']
     user = User.query.filter_by(username=username).first()
     
-    challengeObj = Challenge.query.filter_by(name=challenge)
+    challengeObj = Challenge.query.filter_by(name=challenge).first()
     if not challengeObj:
         return jsonify({"message": "Failed to fetch challenge credential.", "status_code": 400}), 400
     
