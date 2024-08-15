@@ -95,7 +95,7 @@ def next_tick():
         db.session.commit()
         return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Final tick reached. Challenge completed."
 
-    new_tick = Tick(id=new_tick_id)
+    new_tick = Tick(id=new_tick_id, created_at=datetime.now(pytz.timezone('Asia/Jakarta')))
     db.session.add(new_tick)
     db.session.commit()
     
@@ -133,7 +133,7 @@ def next_tick():
         else:
             new_round_id = 1
             
-        new_round = Round(id=new_round_id)
+        new_round = Round(id=new_round_id, created_at=datetime.now(pytz.timezone('Asia/Jakarta')))
         db.session.add(new_round)
         db.session.commit()
             
