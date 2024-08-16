@@ -14,6 +14,9 @@ def submit_flag():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
+    if user.is_admin:
+        return jsonify({"message": "Admin do not play"}), 404
+    
     config = Config.query.first()
     if not (config and config.challenge_started):
         return jsonify({"message": "Challenge is not started"}), 400
