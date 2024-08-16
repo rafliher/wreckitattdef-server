@@ -9,7 +9,7 @@ services:
       FLASK_ENV: development
       SECRET_KEY: your_secret_key
       SQLALCHEMY_DATABASE_URI: mysql://flaskapp:asdadwacsa@db/db_wiad
-      SQLALCHEMY_TRACK_MODIFICATIONS: False
+      SQLALCHEMY_TRACK_MODIFICATIONS: 1
       ADMIN_USERNAME: kekuatanayam
       ADMIN_PASSWORD: adalahkseimbangan
     depends_on:
