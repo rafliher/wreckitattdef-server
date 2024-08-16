@@ -16,7 +16,7 @@ services:
       - db
 
   db:
-    image: mysql
+    image: mariadb
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: aopkdosap
