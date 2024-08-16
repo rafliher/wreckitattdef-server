@@ -42,7 +42,7 @@ def get_scoreboard():
             user_scores["passed_checks"][challenge.name] = 0
             user_scores["total_checks"][challenge.name] = 0
 
-        checks = Check.query.filter_by(user_id=user.id).order_by(Check.tick_id.desc()).all()
+        checks = Check.query.filter_by(user_id=user.id).order_by(Check.tick_id.asc()).all()
         passed_checks = 0
         total_checks = 0
 
