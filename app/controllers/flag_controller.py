@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import app, db, socketio  
-from app.models import Tick, Flag, Submission, User, Challenge, Config, Round
+from app.models import Tick, Flag, Submission, User, Challenge, Config, Round, FailedSubmission
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 import pytz
@@ -26,6 +26,7 @@ def submit_flag():
         return jsonify({"message": "Invalid data"}), 400
 
     flag_value = data['flag']
+    print("[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] User " + username + " submit " + flag_value)
 
     # Get the current tick
     current_tick = Tick.query.order_by(Tick.id.desc()).first()

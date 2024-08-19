@@ -14,7 +14,6 @@ class User(db.Model, UserMixin):
 
     attacks = relationship("Submission", foreign_keys="[Submission.attacker_id]", cascade="all, delete")
     breachs = relationship("Submission", foreign_keys="[Submission.target_id]", cascade="all, delete")
-    calculations = relationship("Calculation", cascade="all, delete")
 
     def serialize(self):
         return {
@@ -108,17 +107,13 @@ class Check(db.Model):
     challenge = relationship("Challenge", overlaps="submissions", cascade="all, delete")
     tick = relationship("Tick", cascade="all, delete")
 
-class Calculation(db.Model):
+class FailedSubmission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    attack = db.Column(db.Integer, nullable=False)
-    defense = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    chall_id = db.Column(db.Integer, db.ForeignKey('challenge.id'))
-    round_id = db.Column(db.Integer, db.ForeignKey('round.id'))
+    string = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Jakarta')), nullable=False)
     
     user = relationship("User", overlaps="calculations", cascade="all, delete")
-    challenge = relationship("Challenge", cascade="all, delete")
-    round = relationship("Round", cascade="all, delete")
     
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)

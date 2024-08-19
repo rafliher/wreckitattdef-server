@@ -1,6 +1,6 @@
 from flask import jsonify, render_template, request, flash, redirect, url_for
 from app import app, db
-from app.models import Tick, Flag, Challenge, Submission, Calculation, Config, User, Round, Check
+from app.models import Tick, Flag, Challenge, Submission, Config, User, Round, Check
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required
 import requests
@@ -173,10 +173,9 @@ def reset_challenge():
         flash('You do not have permission to perform this action.', 'danger')
         return redirect(url_for('dashboard'))
     
-    # Remove all Submission, Calculation, and Tick data
+    # Remove all Submission, Check, and Tick data
     try:
         Submission.query.delete()
-        Calculation.query.delete()
         Check.query.delete()
         Flag.query.delete()
         Tick.query.delete()

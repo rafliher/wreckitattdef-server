@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import app, db
-from app.models import User, Calculation, Challenge, Tick, Round, Submission, Check
+from app.models import User, Challenge, Tick, Round, Submission, Check
 from flask_jwt_extended import jwt_required
 
 @app.route('/api/scoreboard', methods=['GET'])
