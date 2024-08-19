@@ -86,16 +86,16 @@ def next_tick():
     else:
         new_tick_id = 1
         
-    print("[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Tick " + str(new_tick_id) + " started")
+    print("[" + str(pytz.timezone('Asia/Jakarta').localize(datetime.now())) + "] Tick " + str(new_tick_id) + " started")
 
     # Check if tick count in config is reached
     config = Config.query.first()
     if config and new_tick_id > config.ticks_count:
         config.challenge_started = False
         db.session.commit()
-        return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + "] Final tick reached. Challenge completed."
+        return "[" + str(pytz.timezone('Asia/Jakarta').localize(datetime.now())) + "] Final tick reached. Challenge completed."
 
-    new_tick = Tick(id=new_tick_id, created_at=datetime.now(pytz.timezone('Asia/Jakarta')))
+    new_tick = Tick(id=new_tick_id, created_at=pytz.timezone('Asia/Jakarta').localize(datetime.now()))
     db.session.add(new_tick)
     db.session.commit()
     
@@ -133,7 +133,7 @@ def next_tick():
         else:
             new_round_id = 1
             
-        new_round = Round(id=new_round_id, created_at=datetime.now(pytz.timezone('Asia/Jakarta')))
+        new_round = Round(id=new_round_id, created_at=pytz.timezone('Asia/Jakarta').localize(datetime.now()))
         db.session.add(new_round)
         db.session.commit()
             
@@ -164,7 +164,7 @@ def next_tick():
         # Commit all changes to the database
         db.session.commit()
 
-    return "[" + str(datetime.now(pytz.timezone('Asia/Jakarta'))) + f'] Tick {new_tick_id} processed successfully.'
+    return "[" + str(pytz.timezone('Asia/Jakarta').localize(datetime.now())) + f'] Tick {new_tick_id} processed successfully.'
 
 @app.route('/reset_challenge', methods=['POST'])
 @login_required
